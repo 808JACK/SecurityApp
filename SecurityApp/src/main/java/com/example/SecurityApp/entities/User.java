@@ -34,6 +34,7 @@ public class User implements UserDetails {
         this.password = password;
     }
 
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // Example: Add authorities here if needed (e.g., USER, ADMIN roles)
@@ -68,5 +69,48 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true; // Customize if users can be disabled
+    }
+
+    public static final class UserBuilder {
+        private Long id;
+        private String name;
+        private String email;
+        private String password;
+
+        private UserBuilder() {
+        }
+
+        public static UserBuilder anUser() {
+            return new UserBuilder();
+        }
+
+        public UserBuilder builderId(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public UserBuilder builderName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public UserBuilder builderEmail(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public UserBuilder builderPassword(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public User build() {
+            User user = new User();
+            user.setId(id);
+            user.setName(name);
+            user.setEmail(email);
+            user.setPassword(password);
+            return user;
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.example.SecurityApp.controller;
 
 
 import com.example.SecurityApp.dto.LoginDTO;
+import com.example.SecurityApp.dto.LoginResponseDTO;
 import com.example.SecurityApp.dto.SignUpDTO;
 import com.example.SecurityApp.dto.UserDTO;
 import com.example.SecurityApp.services.AuthService;
@@ -13,10 +14,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Arrays;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,19 +32,33 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<UserDTO> signUp(@RequestBody SignUpDTO signUpDTO){
+    public ResponseEntity<UserDTO> signUp(@RequestBody SignUpDTO signUpDTO) {
         UserDTO userDTO = userService.signUp(signUpDTO);
         return ResponseEntity.ok(userDTO);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginDTO loginDTO, HttpServletRequest request,
-                                        HttpServletResponse response){
-        String token = authService.login(loginDTO);
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginDTO loginDTO, HttpServletRequest request,
+                                                  HttpServletResponse response) {
+        LoginResponseDTO loginResponseDTO = authService.login(loginDTO);
 
-        Cookie cookie = new Cookie("token",token);
+
+        Cookie cookie = new Cookie("refreshToken", loginResponseDTO.getRefreshToken());
         cookie.setHttpOnly(true);
         response.addCookie(cookie);
-        return ResponseEntity.ok(token);
+        return ResponseEntity.ok(loginResponseDTO);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponseDTO> refreshToken(HttpServletRequest request){
+
+        String refreshToken = Arrays
+                .stream(request.getCookies())
+                .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                .findFirst()
+                .map(cookie -> cookie.getValue())
+                .orElseThrow(() -> new AuthenticationServiceException("Refresh token not found"));
+        LoginResponseDTO loginResponseDTO = authService.refreshToken(refreshToken);
+        return ResponseEntity.ok(loginResponseDTO);
     }
 }

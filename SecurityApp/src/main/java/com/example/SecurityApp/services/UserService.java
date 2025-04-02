@@ -37,6 +37,10 @@ public class UserService implements UserDetailsService {
         return userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User with this " +userId+" not found"));
     }
 
+    public User getUserByEmail(String user){
+        return userRepo.getUserByEmail(user);
+    }
+
     public UserDTO signUp(SignUpDTO sign) {
         Optional<User> user = userRepo.findByEmail(sign.getEmail());
 
@@ -52,4 +56,7 @@ public class UserService implements UserDetailsService {
     }
 
 
+    public User save(User newUser) {
+        return userRepo.save(newUser);
+    }
 }

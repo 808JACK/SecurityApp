@@ -2,6 +2,7 @@ package com.example.SecurityApp.config;
 
 
 import com.example.SecurityApp.filters.JwtAuthFilter;
+import com.example.SecurityApp.handlers.OAuthenticationSuccess;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -30,23 +31,26 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class WebSecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final OAuthenticationSuccess oAuthenticationSuccess;
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity)throws Exception{
-
+    SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
                 .authorizeHttpRequests(auth ->
                         auth
-                        .requestMatchers("/posts","auth/**").permitAll() // this makes all the post public without and auth
-//                        .requestMatchers("/posts/**").hasAnyRole("ADMIN")
-                        .anyRequest().authenticated())
-                .csrf(csrfConfig ->csrfConfig.disable())
-                .sessionManagement(sessionConfig  -> sessionConfig
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-//                .formLogin(Customizer.withDefaults());
+                                .requestMatchers("/posts", "auth/**", "/login/**", "/oauth2/**").permitAll() // Allow OAuth2 and login paths
+                                .anyRequest().authenticated())
+                .csrf(csrfConfig -> csrfConfig.disable())
+                .sessionManagement(sessionConfig ->
+                        sessionConfig.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Use sessions for OAuth2
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth2config ->
+                        oauth2config
+                                .successHandler(oAuthenticationSuccess)
+                                .failureUrl("/login?error=true")); // Redirect on login failure
 
         return httpSecurity.build();
     }
+
 
 //    custom users
 //    @Bean

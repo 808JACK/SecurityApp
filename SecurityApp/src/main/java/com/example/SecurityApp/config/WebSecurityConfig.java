@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -25,6 +26,8 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import static com.example.SecurityApp.entities.enums.Roles.*;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -32,12 +35,17 @@ public class WebSecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final OAuthenticationSuccess oAuthenticationSuccess;
+    private static final String[] publicRoutes = {
+            "/posts", "auth/**", "/login/**", "/oauth2/**"
+    };
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
                 .authorizeHttpRequests(auth ->
                         auth
-                                .requestMatchers("/posts", "auth/**", "/login/**", "/oauth2/**").permitAll() // Allow OAuth2 and login paths
+                                .requestMatchers(publicRoutes).permitAll() // Allow OAuth2 and login paths
+                                .requestMatchers(HttpMethod.POST,"/posts/**").hasRole(ADMIN.name())//means can only admin can do it
+                                .requestMatchers(HttpMethod.GET,"/posts/**").hasRole(CREATOR.name())
                                 .anyRequest().authenticated())
                 .csrf(csrfConfig -> csrfConfig.disable())
                 .sessionManagement(sessionConfig ->

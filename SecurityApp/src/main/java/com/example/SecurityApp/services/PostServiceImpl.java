@@ -34,9 +34,9 @@ public class PostServiceImpl implements PostService {
     @Override
     public PostDTO getPostById(Long postId) {
 
-        User user =  (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//        User user =  (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal(); //ye comment islyea kiya cause hum without auth login post le rahe the but ye user context lera aur mil nai rah so vo error deta means post nai dekhata
 //      we are logging here like which user  is trying to get the post
-        log.info("user {}",user);
+//        log.info("user {}",user);
         PostEntity postEntity = postRepo.findById(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("post with this " + postId + " not found"));
         return modelMapper.map(postEntity, PostDTO.class);

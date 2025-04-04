@@ -5,7 +5,9 @@ import com.example.SecurityApp.dto.LoginDTO;
 import com.example.SecurityApp.dto.LoginResponseDTO;
 import com.example.SecurityApp.dto.SignUpDTO;
 import com.example.SecurityApp.dto.UserDTO;
+import com.example.SecurityApp.entities.User;
 import com.example.SecurityApp.services.AuthService;
+import com.example.SecurityApp.services.SessionService;
 import com.example.SecurityApp.services.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
@@ -30,6 +32,7 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthService authService;
+    private final SessionService sessionService;
 
     @PostMapping("/signup")
     public ResponseEntity<UserDTO> signUp(@RequestBody SignUpDTO signUpDTO) {
@@ -60,5 +63,11 @@ public class AuthController {
                 .orElseThrow(() -> new AuthenticationServiceException("Refresh token not found"));
         LoginResponseDTO loginResponseDTO = authService.refreshToken(refreshToken);
         return ResponseEntity.ok(loginResponseDTO);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout (User user){
+        sessionService.logoutSession(user);
+        return ResponseEntity.ok("Logout done from all sessions");
     }
 }

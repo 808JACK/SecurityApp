@@ -4,6 +4,7 @@ import com.example.SecurityApp.entities.Session;
 import com.example.SecurityApp.entities.User;
 import com.example.SecurityApp.repo.SessionRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 import org.springframework.stereotype.Service;
 
@@ -39,5 +40,17 @@ public class SessionService {
                 .orElseThrow(() -> new SessionAuthenticationException("session not found for this id" +refreshToken));
         session.setLastUsedAt(LocalDateTime.now());
         sessionRepo.save(session);
+    }
+
+    public void logoutSession(User user){
+
+        List<Session> sessionList = sessionRepo.findByUser(user);
+
+        if(sessionList == null){
+            throw new SessionAuthenticationException("no session found with" + user);
+        }
+
+        sessionRepo.deleteAll(sessionList);
+
     }
 }

@@ -1,14 +1,18 @@
 package com.example.SecurityApp.entities;
 
+import com.example.SecurityApp.entities.enums.Roles;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Getter
@@ -24,6 +28,10 @@ public class User implements UserDetails {
     private String email;
     private String password;
 
+    @ElementCollection(fetch = FetchType.EAGER)//because we want it set , we have eager means on time not lazy fetch
+    @Enumerated(EnumType.STRING)//for the Type cause we have enum it can be ordinal (numerical) or string
+    private Set<Roles> roles;
+
     public User() {
     }
 
@@ -38,7 +46,9 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // Example: Add authorities here if needed (e.g., USER, ADMIN roles)
-        return List.of();
+        return roles.stream()
+                .map(roles1 -> new SimpleGrantedAuthority("ROLE_"+roles1.name()))
+                .collect(Collectors.toSet());
     }
 
     @Override

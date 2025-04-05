@@ -1,6 +1,7 @@
 package com.example.SecurityApp.config;
 
 
+import com.example.SecurityApp.entities.enums.Permissions;
 import com.example.SecurityApp.filters.JwtAuthFilter;
 import com.example.SecurityApp.handlers.OAuthenticationSuccess;
 import lombok.Getter;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -31,30 +33,39 @@ import static com.example.SecurityApp.entities.enums.Roles.*;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@EnableMethodSecurity(securedEnabled = true)
 public class WebSecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final OAuthenticationSuccess oAuthenticationSuccess;
     private static final String[] publicRoutes = {
-            "/posts", "auth/**", "/login/**", "/oauth2/**"
+            "auth/**", "/login/**", "/oauth2/**"
     };
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .authorizeHttpRequests(auth ->
-                        auth
-                                .requestMatchers(publicRoutes).permitAll() // Allow OAuth2 and login paths
-                                .requestMatchers(HttpMethod.POST,"/posts/**").hasRole(ADMIN.name())//means can only admin can do it
-                                .requestMatchers(HttpMethod.GET,"/posts/**").hasRole(CREATOR.name())
-                                .anyRequest().authenticated())
                 .csrf(csrfConfig -> csrfConfig.disable())
                 .sessionManagement(sessionConfig ->
-                        sessionConfig.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Use sessions for OAuth2
+                        sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth ->
+                        auth
+                                .requestMatchers(publicRoutes).permitAll()
+                                .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2config ->
                         oauth2config
                                 .successHandler(oAuthenticationSuccess)
-                                .failureUrl("/login?error=true")); // Redirect on login failure
+                                .failureUrl("/login?error=true"))
+                .exceptionHandling(exceptionHandling ->
+                        exceptionHandling
+                                .authenticationEntryPoint((request, response, authException) -> {
+                                    // Throw AuthenticationException to be caught by GlobalExceptionHandler
+                                    throw authException;
+                                })
+                                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                                    // Throw AccessDeniedException to be caught by GlobalExceptionHandler
+                                    throw accessDeniedException;
+                                }));
 
         return httpSecurity.build();
     }

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.orm.hibernate5.SpringSessionContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -27,19 +28,31 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostDTO createNewPost(PostDTO input) {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
         PostEntity postEntity = modelMapper.map(input,PostEntity.class);
+        postEntity.setAuthor(user);
         return modelMapper.map(postRepo.save(postEntity), PostDTO.class);
     }
 
+//    @Override
+//    public PostDTO getPostById(Long postId) {
+//
+////        User user =  (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal(); //ye comment islyea kiya cause hum without auth login post le rahe the but ye user context lera aur mil nai rah so vo error deta means post nai dekhata
+////      we are logging here like which user  is trying to get the post
+////        log.info("user {}",user);
+//        PostEntity postEntity = postRepo.findById(postId)
+//                .orElseThrow(() -> new ResourceNotFoundException("post with this " + postId + " not found"));
+//        return modelMapper.map(postEntity, PostDTO.class);
+//    }
     @Override
     public PostDTO getPostById(Long postId) {
-
-//        User user =  (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal(); //ye comment islyea kiya cause hum without auth login post le rahe the but ye user context lera aur mil nai rah so vo error deta means post nai dekhata
-//      we are logging here like which user  is trying to get the post
-//        log.info("user {}",user);
         PostEntity postEntity = postRepo.findById(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("post with this " + postId + " not found"));
-        return modelMapper.map(postEntity, PostDTO.class);
+        System.out.println("PostEntity: " + postEntity);
+        PostDTO dto = modelMapper.map(postEntity, PostDTO.class);
+        System.out.println("Mapped PostDTO: " + dto);
+        return dto;
     }
 
     @Override

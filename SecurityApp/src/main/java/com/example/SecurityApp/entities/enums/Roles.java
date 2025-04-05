@@ -4,5 +4,5 @@ public enum Roles {
 
     USER,
     CREATOR,
-    ADMIN;
+    ADMIN
 }
